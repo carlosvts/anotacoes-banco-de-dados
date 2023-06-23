@@ -10,6 +10,9 @@
 
 # Por ser em Python puro, ele possui context-manager, diferentemente do sqlite3
 
+# Geralmente não criamos tabelas, utilizamos algumas prontas e renomadsa
+# Jusatamente pelo MySQL tratar de grandes dados
+
 import os
 
 import dotenv
@@ -33,4 +36,13 @@ connection = pymysql.connect(
 with connection:
     with connection.cursor() as cursor:
         # Minha query sql vem aqui
-        print(cursor)
+        cursor.execute(
+            # Comando create nao precisa de commit
+            'CREATE TABLE IF NOT EXISTS customers ('
+            'id INT NOT NULL AUTO_INCREMENT, '
+            'nome VARCHAR(50) NOT NULL, '  # varchar-string limitavel(50)char
+            'idade INT NOT NULL, '
+            'PRIMARY KEY (id)'
+            ')'
+        )
+        # connection.commit() não pode ser usado no método CREATE
