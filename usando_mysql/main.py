@@ -133,7 +133,7 @@ with connection:
         connection.commit()
 
     # CRUD
-    # R - Read, lendo valores com SELECT
+    # R - Read, lendo valores com SELECT, não precisa de commit
     with connection.cursor() as cursor:
         sql = (
             f'SELECT * FROM {TABLE_NAME} '  # selecione tudo da customers
@@ -150,18 +150,72 @@ with connection:
 
     # Utilizando input e calculadamente evitando SQL injection
     with connection.cursor() as cursor:
-        menor_id = int(input('Digite o menor id: '))
-        maior_id = int(input('Digite o maior id: '))
+        #    menor_id = int(input('Digite o menor id: '))
+        #    maior_id = int(input('Digite o maior id: '))
+        menor_id = 2
+        maior_id = 4
 
         sql = (
             f'SELECT * FROM {TABLE_NAME} '
             'WHERE id BETWEEN %s AND %s  '
         )
-        cursor.execute(sql)  # type: ignore
+        cursor.execute(sql, (menor_id, maior_id))
 
-        cursor.execute(sql, (menor_id, maior_id))  # type: ignore
-        print(cursor.mogrify(sql, (menor_id, maior_id)))  # type: ignore
-        data5 = cursor.fetchall()  # type: ignore
+        # cursor.execute(sql, (menor_id, maior_id))
+        # print(cursor.mogrify(sql, (menor_id, maior_id)))
+        # data5 = cursor.fetchall()
 
         # for row in data5:
         #     print(row)
+
+    # CRUD
+    # D - Delete, deletando valores com DELETE, precisa de commit
+    # CUIDADO COM DELETE SEM WHERE
+    with connection.cursor() as cursor:
+        # Quero deletar o Fabiano da tabela
+        sql = (
+            f'DELETE FROM {TABLE_NAME} '
+            'WHERE id = 3 '  # PRIMARY_KEY do Fabiano
+        )
+        cursor.execute(sql)
+        connection.commit()
+
+        cursor.execute(f'SELECT * FROM {TABLE_NAME}')
+        data6 = cursor.fetchall()
+        for row in data6:
+            print(row)
+
+    # Delete com WHERE passando placeholders
+    with connection.cursor() as cursor:
+        # Quero deletar o Tinha da tabela
+        sql = (
+            f'DELETE FROM {TABLE_NAME} '
+            'WHERE id = %s '  # PRIMARY_KEY do Tinha
+        )
+        cursor.execute(sql, (2,))
+        connection.commit()
+
+        cursor.execute(f'SELECT * FROM {TABLE_NAME}')
+        data7 = cursor.fetchall()
+        for row in data7:
+            print(row)
+
+    # CRUD
+    # U - Update, alterando valores com UPDATE, necessário commit
+    # cuidado com UPDATE sem WHERE
+    # Posso passar no WHERE placeholders, funcionaria igual o do DELETE
+    # Por isso, não vou fazer um código explicando como funciona com placehold
+    with connection.cursor() as cursor:
+        # Trocando o 'carlos iteravel 3' para trocado
+        sql = (
+            f'UPDATE {TABLE_NAME} '
+            'SET nome=%s, idade=%s '
+            'WHERE id=%s'
+        )
+        cursor.execute(sql, ("Trocado", 210, 8))
+        connection.commit()
+
+        cursor.execute(f'SELECT * FROM {TABLE_NAME}')
+        data8 = cursor.fetchall()
+        for row in data8:
+            print(row)
