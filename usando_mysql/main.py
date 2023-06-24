@@ -99,3 +99,33 @@ with connection:
         }
         cursor.execute(sql, data_dict)
         connection.commit()
+
+    # Utilizando executemany, os argumentos devem ser iteráveis
+    # Pode ser um iterável com dicionários
+    with connection.cursor() as cursor:
+        sql = (
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES (%(name)s, %(age)s) '
+        )
+
+        data_iteravel_dict = (
+            {"age": 46, "name": "Carlos iteravel 1"},
+            {"age": 47, "name": "Carlos iteravel 2"},
+            {"age": 48, "name": "Carlos iteravel 3"},
+        )
+        cursor.executemany(sql, data_iteravel_dict)  # mandando vários dados
+        connection.commit()
+
+    # Mas pode ser um iterável de iteráveis, uma tupla de tuplas por exemplo
+    with connection.cursor() as cursor:
+        sql = (
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES (%s, %s) '  # Agora é preciso alterar aqui
+        )  # Além de que preciso manter a ordem
+
+        data_iteravel_2 = (
+            ("Carlos tupla 1", 53),
+            ("Carlos tupla 2", 54)
+        )
+        cursor.executemany(sql, data_iteravel_2)  # mandando vários dados
+        connection.commit()
