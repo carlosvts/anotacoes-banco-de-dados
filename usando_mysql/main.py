@@ -20,6 +20,8 @@ import pymysql
 
 dotenv.load_dotenv()
 
+TABLE_NAME = "customers"
+
 connection = pymysql.connect(
     host=os.environ['MYSQL_HOST'],  # qual servidor vou conectar
     user=os.environ['MYSQL_USER'],  # qual o usuario
@@ -38,11 +40,44 @@ with connection:
         # Minha query sql vem aqui
         cursor.execute(
             # Comando create nao precisa de commit
-            'CREATE TABLE IF NOT EXISTS customers ('
+            f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} ('
             'id INT NOT NULL AUTO_INCREMENT, '
             'nome VARCHAR(50) NOT NULL, '  # varchar-string limitavel(50)char
             'idade INT NOT NULL, '
             'PRIMARY KEY (id)'
             ')'
         )
+        # TRUNCATE limpa a tabela inteira
+        cursor.execute(f'TRUNCATE TABLE {TABLE_NAME}')
         # connection.commit() não pode ser usado no método CREATE
+
+    # Posso usar varios cursores na mesma conexão
+    with connection.cursor() as cursor:
+        # result = cursor.execute(texto) atribuir em uma var me mostra
+        # quantas linhas foram afetadas com o comando, posso utilizar SELECT
+        # também
+        cursor.execute(
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES ("Carlos", 16) '
+        )
+        cursor.execute(
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES ("Tinha", 3) '
+        )
+        cursor.execute(
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES ("Fabiano", 5) '
+        )
+        connection.commit()  # NÃO ESQUEÇA de commitar
+
+    # Evitando SQL injection
+    # Passando assim, os valores são codificados e não são passados como
+    # Comandos SQL
+    with connection.cursor() as cursor:
+        sql = (
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES (%s, %s) '
+        )
+        data = ("Carlos placeholder", 30)
+        cursor.execute(sql, data)
+        connection.commit()
