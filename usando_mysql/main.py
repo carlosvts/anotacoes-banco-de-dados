@@ -78,6 +78,24 @@ with connection:
             f'INSERT INTO {TABLE_NAME} '
             '(nome, idade) VALUES (%s, %s) '
         )
-        data = ("Carlos placeholder", 30)
+        data = ("Carlos placeholder", 30)  # Teria que seguir a ordem dos place
         cursor.execute(sql, data)
+        connection.commit()
+
+    # Inserindo valores com dicionários ao invés de iteráveis
+    with connection.cursor() as cursor:
+        sql = (
+            f'INSERT INTO {TABLE_NAME} '
+            '(nome, idade) VALUES (%(name)s, %(age)s) '  # agora os places
+            # tem que bater com a ordem (nome, idade), que
+            # é a ordem das colunas
+            # o nome dos placeholders DEVEM BATER com o nome das chaves
+            # do dicionário
+        )
+        data_dict = {
+            "age": 25,  # a ordem do dict é irrelevante
+            "name": "Carlos dict",
+
+        }
+        cursor.execute(sql, data_dict)
         connection.commit()
