@@ -11,12 +11,33 @@
 # Por ser em Python puro, ele possui context-manager, diferentemente do sqlite3
 
 # Geralmente não criamos tabelas, utilizamos algumas prontas e renomadsa
-# Jusatamente pelo MySQL tratar de grandes dados
+# Justamente pelo MySQL tratar de grandes dados
+
+# Cursor default -> retorna tuplas
+# DictCursor -> retorna uma tupla de dicionários
+
+# SSCursor -> é unbuffered, ou seja, os dados não são salvos na memoria local
+# utilizado para conexões lentas ou muitos dados, apenas a linha que o scroll
+# fica está salva na memoria, depois é apagada, porém não é possivel saber
+# o número total de linhas
+#
+#  for row in cursor.fetchall_unbuffered():
+#             print(row)
+#
+#             if row['id'] >= 5:
+#                 break
+#
+# for row in cursor.fetchall_unbuffered(): <- scroll começa do 5
+#             print(row)
+# Preciso passar que o cursor é unbuffered nesse caso
+# O cursor.fetchall_unbuffered retorna um generator, então ele se esgota
+# SSDictCursor -> A mesma coisa, porém ele passa com o valor de dict
 
 import os
 
 import dotenv
 import pymysql
+import pymysql.cursors
 
 dotenv.load_dotenv()
 
@@ -27,6 +48,9 @@ connection = pymysql.connect(
     user=os.environ['MYSQL_USER'],  # qual o usuario
     password=os.environ['MYSQL_PASSWORD'],  # qual a senha do usuario
     database=os.environ['MYSQL_DATABASE'],  # qual a base de dados
+    charset="utf8mb4",
+    cursorclass=pymysql.cursors.DictCursor,  # Cursor normal retorna uma tupla
+    # Passando esse parametro adicional, o cursor retornará um dicionário
 )
 
 # cursor = connection.cursor()
@@ -197,8 +221,8 @@ with connection:
 
         cursor.execute(f'SELECT * FROM {TABLE_NAME}')
         data7 = cursor.fetchall()
-        for row in data7:
-            print(row)
+        # for row in data7:
+        #     print(row)
 
     # CRUD
     # U - Update, alterando valores com UPDATE, necessário commit
@@ -217,5 +241,46 @@ with connection:
 
         cursor.execute(f'SELECT * FROM {TABLE_NAME}')
         data8 = cursor.fetchall()
-        for row in data8:
+
+        # for row in data8:
+        #     _id, name, age = row
+        #     print(row)
+
+        # PEGANDO INFORMAÇÕES DO DICIONÁRIO
+        # for row in data8:
+        #     print(row)
+        #     # print(row['nome'])
+
+        print("For 1:")
+        for row in cursor.fetchall():
             print(row)
+            # print(row['nome'])
+
+        print()
+        print("For 2")
+        cursor.scroll(-1)  # Na posição atual do scroll, role 1 pra tras
+        # cursor.scroll(1, "absolute") Utilizando a posição absoluta
+        for row in cursor.fetchall():
+            print(row)
+
+    # DIFERENTES FORMAS DE PEGAR INFORMAÇÕES IMPORTANTES
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f'SELECT id from {TABLE_NAME} ORDER BY id DESC LIMIT 1'
+        )  # ordenado pelo ID decrescente com o limite de 1 valor
+        # ou seja, pegamos somente o maior valor de ID
+        lastIdFromSelect = cursor.fetchone()
+
+        resultFromSelect = cursor.execute(f'SELECT * FROM {TABLE_NAME} ')
+        for row in data6:
+            print(row)
+
+        print('resultFromSelect', resultFromSelect)
+        print('len(data6)', len(data6))
+        print('rowcount', cursor.rowcount)  # conta os últimos valores afetados
+        print('lastrowid', cursor.lastrowid)  # valor do ultimo id inserido
+        print('lastrowid na mão', lastIdFromSelect)  # "na mão" pois foi feito
+        # com um select
+
+        cursor.scroll(0, 'absolute')  # Geralmente não é muito utilizado
+        print('rownumber', cursor.rownumber)  # qual número da linha que esta
