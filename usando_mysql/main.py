@@ -36,6 +36,8 @@ connection = pymysql.connect(
 # print(os.environ['MYSQL_DATABASE'])
 
 with connection:
+    # CRUD
+    # C - Create
     with connection.cursor() as cursor:
         # Minha query sql vem aqui
         cursor.execute(
@@ -129,3 +131,37 @@ with connection:
         )
         cursor.executemany(sql, data_iteravel_2)  # mandando vários dados
         connection.commit()
+
+    # CRUD
+    # R - Read, lendo valores com SELECT
+    with connection.cursor() as cursor:
+        sql = (
+            f'SELECT * FROM {TABLE_NAME} '  # selecione tudo da customers
+            'WHERE id = 3 '  # ou where id > 3, posso fazer varias coisas
+        )
+        cursor.execute(sql)  # com SELECT não preciso commitar nada
+        # cursor.mogrify
+
+        # Eles são iterators, ou seja, esgotam
+        dados_coletados = cursor.fetchall()
+
+        # for row in dados_coletados:
+        #     print(row)
+
+    # Utilizando input e calculadamente evitando SQL injection
+    with connection.cursor() as cursor:
+        menor_id = int(input('Digite o menor id: '))
+        maior_id = int(input('Digite o maior id: '))
+
+        sql = (
+            f'SELECT * FROM {TABLE_NAME} '
+            'WHERE id BETWEEN %s AND %s  '
+        )
+        cursor.execute(sql)  # type: ignore
+
+        cursor.execute(sql, (menor_id, maior_id))  # type: ignore
+        print(cursor.mogrify(sql, (menor_id, maior_id)))  # type: ignore
+        data5 = cursor.fetchall()  # type: ignore
+
+        # for row in data5:
+        #     print(row)
